@@ -1,4 +1,3 @@
-
 package main
 import "fmt"
 
@@ -18,4 +17,5 @@ func (t *Test)printMe() {
 func main() {
 				var testTest = Test{"testArg"}
 				testTest.printMe()
+				var test2 = "fd" || "hi"
 }

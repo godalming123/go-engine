@@ -1,4 +1,4 @@
-package main
+package goEngine
 import "fmt"
 import "math"
 
@@ -23,8 +23,7 @@ func (s *Screen)printMe()  {
 }
 
 func (s *Screen)setPix()  {
-    fmt.Println(s.headerContents)
-    fmt.Println(s.contents)
+
 }
 
 // functions to handle 3d (take a 3d piont and convert it to a 2d piont that looks 3d)
@@ -46,10 +45,8 @@ func pictorial3d(piont Piont) Piont {
 				return isometric3d(piont)
 }
 
-
-
 func newScreen(width uint, height uint, perspectiveFunction func(Piont) Piont) Screen {
-    if (perspectiveFunction == nil ){
+    if perspectiveFunction == nil {
         perspectiveFunction = pictorial3d
     }
     return Screen{
@@ -63,6 +60,6 @@ func newScreen(width uint, height uint, perspectiveFunction func(Piont) Piont) S
 }
 
 func main() {
-				ourScreen := newScreen(32,32,nil)
+  ourScreen := newScreen(32,32,nil)
 	ourScreen.printMe()
 }
