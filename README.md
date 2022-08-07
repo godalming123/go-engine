@@ -1,6 +1,10 @@
 # go-engine
 
-The (future) successor to https://github.com/godalming123/python-engine rewritten i go. Why future? Because currently the line emplementation does not work in some case and the setPixel function does not work with some charecters. Its possible this is a memory leak this is also why the realeses are called 'broken'
+The successor to https://github.com/godalming123/python-engine rewritten i go.
+
+## Bugs
+This program is not yet perfect with 1 notable bug:
+ - The setpixel function does not wor with unicode block charecters for some reason
 
 ## Installing
 1. **Git clone**
