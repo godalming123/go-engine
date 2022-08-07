@@ -52,6 +52,14 @@ func copysign(a int, b int) int {
 				}
 }
 
+func absInt(num int) int {
+				if num >= 0 {
+								return num
+				} else {
+								return -num
+				}
+}
+
 func clearScreen() {
 				cmd := exec.Command("clear") //Linux example, its tested
         cmd.Stdout = os.Stdout
@@ -92,7 +100,7 @@ func selectTui(header string, options []string, selectedIndex uint) uint {
 								input := string(i)
 								if (input == "w" || input == "W") && selectedIndex > 0 {
 												selectedIndex -= 1
-								} else if (input == "s" || input == "S") && selectedIndex < uint(len(options)) {
+								} else if (input == "s" || input == "S") && selectedIndex < uint(len(options) - 1) {
 												selectedIndex += 1												
 								} else if (input == "d" || input == "D") {
 												return selectedIndex
@@ -106,18 +114,25 @@ func selectTui(header string, options []string, selectedIndex uint) uint {
 // === FUNCTIONS FOR SCREEN STRUCT ===
 
 func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
-				if screen.showLogs {
-								fmt.Println("LOG: STARTED: drawing bresignham line ================================")
-				}
-				screen.setPix(a,newChar)
-				dx := math.Abs(float64(b.X - a.X))
-				dy := math.Abs(float64(b.Y - a.Y))
-				dz := math.Abs(float64(b.Z - a.Z))
+				dx := absInt(int(b.X - a.X))
+				dy := absInt(int(b.Y - a.Y))
+				dz := absInt(int(b.Z - a.Z))
 				xs := copysign(1,int(b.X - a.X))
 				ys := copysign(1,int(b.Y - a.Y))
 				zs := copysign(1,int(b.Z - a.Z))
-  
+
+				if screen.showLogs {
+								fmt.Println("LOG: STARTED: drawing bresignham line from X:", a.X, "Y:", a.Y, "Z:", a.Z, "to X:", b.X,"Y:", b.Y, "Z:", b.Z)
+								fmt.Println("LOG: deferences: X:", dx, "Y:", dy, "Z", dz)
+				}
+
+				screen.setPix(a,newChar)
+ 
         if (dx >= dy) && (dx >= dz){// Driving axis is X-axis"
+								if screen.showLogs {
+												fmt.Println("LOG: driving axis for line is X axis")
+								}
+
 								p1 := 2 * dy - dx
 								p2 := 2 * dz - dx
 								for (a.X != b.X){
@@ -135,6 +150,10 @@ func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
 												screen.setPix(a,newChar)
 								}
 				} else if (dy >= dx) && (dy >= dz) {// Driving axis is Y axis
+								if screen.showLogs {
+												fmt.Println("LOG: driving axis for line is Y axis")
+								}
+
 								p1 := 2 * dx - dy
 								p2 := 2 * dz - dy
 								for (a.Y != b.Y) {
@@ -152,6 +171,10 @@ func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
 												screen.setPix(a,newChar)
 								}
 				} else if (dz >= dx) && (dz <= dy) {// Driving axis is Z-axis" 
+								if screen.showLogs {
+												fmt.Println("LOG: driving axis for line is Z axis")
+								}
+
 								p1 := 2 * dy - dz
 								p2 := 2 * dx - dz
 								for (a.Z != b.Z){
@@ -176,7 +199,7 @@ func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
 				}
 }
 
-func newScreen(width uint, height uint, name string, perspectiveFunction func(Piont, map[string]int) Piont, perspectiveFunctionOpts map[string]int) Screen {
+func newScreen(width uint, height uint, name string, perspectiveFunction func(Piont, map[string]int) Piont, perspectiveFunctionOpts map[string]int, showGuis bool, showLogs bool) Screen {
 				if perspectiveFunction == nil { // if the perspective function is undefiened
 								perspectiveFunction = pictorial3d // then set it to something
 				}
@@ -184,7 +207,9 @@ func newScreen(width uint, height uint, name string, perspectiveFunction func(Pi
 				for i:=uint(0);i < height;i++ {//for each row
 								contents += strings.Repeat("  ", int(width)) + " \n"
 				}
-				//fmt.Println("LOG: screen created with", height, "pixels in height and", width, "pixels in width.")
+				if showLogs {
+								fmt.Println("LOG: screen created with", height, "pixels in height and", width, "pixels in width.")
+				}
 
 				return Screen{
 								width: width,
@@ -193,8 +218,8 @@ func newScreen(width uint, height uint, name string, perspectiveFunction func(Pi
 								originalContents: contents,
 								perspectiveFunction: perspectiveFunction,
 								perspectiveFunctionOpts: perspectiveFunctionOpts,
-								showLogs: true,
-								showGuis: true,
+								showLogs: showLogs,
+								showGuis: showGuis,
 								name: name,
 				}
 }
@@ -203,18 +228,16 @@ func (s *Screen)setPix(piont Piont, newChar string)  {
   if piont.has3d { // if the piont is 3D
     piont = s.perspectiveFunction(piont, s.perspectiveFunctionOpts) // then make it 2D
 	}
-	if s.showLogs {
-					fmt.Println("LOG: pixel created at Y:", piont.Y, "X:", piont.X, "and the charecter will be:", newChar)
-	}
 	if piont.X < s.width && piont.Y < s.height {
 				charToSet := (piont.Y * (s.width + 1)) + piont.X
 				charToSet *= 2
 				s.contents = s.contents[:charToSet] + strings.Repeat(newChar, 2) + s.contents[charToSet+2:]
 				if s.showLogs {
-								fmt.Println("LOG: char to set is", charToSet)
-								fmt.Println(s.contents)
+								fmt.Println("LOG: pixel created at Y:", piont.Y, "X:", piont.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
 				}
-	}
+	} else if s.showLogs{
+					fmt.Println("LOG: It doesnt appear that the pixel is within the screens bounds")
+  }
 }
 
 func (screen *Screen)printMe() {
@@ -264,8 +287,16 @@ func main() {
 				exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 				selection := uint(0)
+				showLogs := "OFF"
+				showGuis := "ON"
+
+				showLogsBool := false
+				showGuisBool := true
+
 
 				mainLoop: for true {
+								printTook := true
+								printQuit := true
 								selection = selectTui(
 												"ﳑ GO ENGINE - select an option",
 												[]string{
@@ -275,33 +306,56 @@ func main() {
 																"Show a graph demo",
 																"Show a line to test performance",
 																"Show some pixels to test code",
+																"Show logs " + showLogs,
+																"Show guis " + showGuis,
 																"Quit",
 												},
 												selection,
 								)
 
 								clearScreen()
-
+								
 								start := time.Now()
 								switch selection {
-												case uint(0):
-																speedTest()
+												case 0:
+																speedTest(showGuisBool, showLogsBool)
 												case 1:
-																cube3d()
+																cube3d(showGuisBool,showLogsBool)
 												case 2:
-																spinningLine()
+																spinningLine(showGuisBool,showLogsBool)
 												case 3:
-																graphDemo()
+																graphDemo(showGuisBool,showLogsBool)
 												case 4:
-																lineSpeedTest()
+																lineSpeedTest(showGuisBool,showLogsBool)
 												case 5:
-																setFewPixels()
+																setFewPixels(showGuisBool,showLogsBool)
 												case 6:
+																if showLogs == "ON" {
+																				showLogs = "OFF"
+																				showLogsBool = false
+																} else {
+																				showLogs = "ON"
+																				showLogsBool = true
+																}
+																printQuit, printTook = false, false
+												case 7:
+																if showGuis == "ON" {
+																				showGuis = "OFF"
+																				showGuisBool = false
+																} else {
+																				showGuis = "ON"
+																				showGuisBool = true
+																}
+																printQuit, printTook = false, false
+												case 8:
 																break mainLoop
 								}
-								fmt.Println("Took:", time.Since(start))
-
-								typeToQuit("Press any key to exit")
+								if printTook {
+												fmt.Println("Took:", time.Since(start))
+								}
+								if printQuit {
+												typeToQuit("Press any key to exit")
+								}
 				}
 
 				fmt.Println("Bye bye 👋")

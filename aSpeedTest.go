@@ -4,6 +4,6 @@ import (
 				"fmt"
 )
 
-func speedTest () {
+func speedTest (showGuis bool, showLogs bool) {
 				fmt.Println("Imagen if this would actually test your speed")
 }
