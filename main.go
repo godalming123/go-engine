@@ -170,7 +170,7 @@ func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
 												p2 += 2 * dz
 												screen.setPix(a,newChar)
 								}
-				} else if (dz >= dx) && (dz <= dy) {// Driving axis is Z-axis" 
+				} else if (dz >= dx) && (dz >= dy) {// Driving axis is Z-axis" 
 								if screen.showLogs {
 												fmt.Println("LOG: driving axis for line is Z axis")
 								}
