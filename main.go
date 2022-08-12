@@ -12,11 +12,26 @@ import (
 
 // === STRUCTS ===
 
-type Piont struct {
+type Point struct {
   X     uint
   Y     uint
 	Z     uint
 	has3d bool
+}
+
+type Edge struct {
+				pointA Point
+				pointB Point
+				edgeCharecter string
+}
+
+type Face struct {
+				edges []Edge
+				fillCharecter string
+}
+
+type Shape3d struct {
+				faces []Face
 }
 
 type Screen struct {
@@ -24,7 +39,7 @@ type Screen struct {
   height                  uint
   contents                string
 	originalContents        string
-	perspectiveFunction     func(Piont, map[string]int) Piont
+	perspectiveFunction     func(Point, map[string]int) Point
 	perspectiveFunctionOpts map[string]int
 	showLogs                bool
 	showGuis                bool
@@ -113,7 +128,7 @@ func selectTui(header string, options []string, selectedIndex uint) uint {
 
 // === FUNCTIONS FOR SCREEN STRUCT ===
 
-func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
+func (screen *Screen)bresignham3D(a Point, b Point, newChar string) {
 				dx := absInt(int(b.X - a.X))
 				dy := absInt(int(b.Y - a.Y))
 				dz := absInt(int(b.Z - a.Z))
@@ -199,7 +214,7 @@ func (screen *Screen)bresignham3D(a Piont, b Piont, newChar string) {
 				}
 }
 
-func newScreen(width uint, height uint, name string, perspectiveFunction func(Piont, map[string]int) Piont, perspectiveFunctionOpts map[string]int, showGuis bool, showLogs bool) Screen {
+func newScreen(width uint, height uint, name string, perspectiveFunction func(Point, map[string]int) Point, perspectiveFunctionOpts map[string]int, showGuis bool, showLogs bool) Screen {
 				if perspectiveFunction == nil { // if the perspective function is undefiened
 								perspectiveFunction = pictorial3d // then set it to something
 				}
@@ -224,21 +239,49 @@ func newScreen(width uint, height uint, name string, perspectiveFunction func(Pi
 				}
 }
 
-func (s *Screen)setPix(piont Piont, newChar string)  {
-  if piont.has3d { // if the piont is 3D
-    piont = s.perspectiveFunction(piont, s.perspectiveFunctionOpts) // then make it 2D
+func (s *Screen)setPix(point Point, newChar string)  {
+  if point.has3d { // if the point is 3D
+    point = s.perspectiveFunction(point, s.perspectiveFunctionOpts) // then make it 2D
 	}
-	if piont.X < s.width && piont.Y < s.height {
-				charToSet := (piont.Y * (s.width + 1)) + piont.X
+	if point.X < s.width && point.Y < s.height {
+				charToSet := (point.Y * (s.width + 1)) + point.X
 				charToSet *= 2
 				s.contents = s.contents[:charToSet] + strings.Repeat(newChar, 2) + s.contents[charToSet+2:]
 				if s.showLogs {
-								fmt.Println("LOG: pixel created at Y:", piont.Y, "X:", piont.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
+								fmt.Println("LOG: pixel created at Y:", point.Y, "X:", point.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
 				}
 	} else if s.showLogs{
 					fmt.Println("LOG: It doesnt appear that the pixel is within the screens bounds")
   }
 }
+
+func (screen *Screen)drawEdge(edge Edge) {
+				screen.bresignham3D(edge.pointA, edge.pointB, edge.edgeCharecter)
+}
+
+func (screen *Screen)drawFace(face Face) {
+				if screen.showLogs {
+								fmt.Println("LOG: started to draw face")
+				}
+
+				// draw the borders
+				for edge := 0; edge < len(face.edges); edge++ {
+								screen.drawEdge(face.edges[edge])
+				}
+				// fill it in
+
+}
+
+func (screen *Screen)draw3dShape(shape Shape3d) {
+				if screen.showLogs {
+								fmt.Println("LOG: started to draw shape")
+				}
+				for face := 0; face < len(shape.faces); face++ {
+								screen.drawFace(shape.faces[face])
+				}
+}
+
+
 
 func (screen *Screen)printMe() {
 				if screen.showGuis {
@@ -259,25 +302,25 @@ func (screen *Screen)reset() {
 				}
 }
 
-// === FUNCTIONS TO HANDLE 3D (take a 3d piont and convert it to a 2d piont that looks 3d) ===
+// === FUNCTIONS TO HANDLE 3D (take a 3d point and convert it to a 2d point that looks 3d) ===
 
-func oblique3d(piont Piont, opts map[string]int) Piont {
-				return Piont {
-								X: piont.X + piont.Z,
-								Y: piont.Y + piont.Z,
+func oblique3d(point Point, opts map[string]int) Point {
+				return Point {
+								X: point.X + point.Z,
+								Y: point.Y + point.Z,
 				}
 }
 
-func isometric3d(piont Piont, opts map[string]int) Piont {
-				return Piont {
-								X: piont.X + piont.Z,
-								Y: piont.Y + piont.Z + uint(math.Round(float64(piont.X) * 0.2)),
+func isometric3d(point Point, opts map[string]int) Point {
+				return Point {
+								X: point.X + point.Z,
+								Y: point.Y + point.Z + uint(math.Round(float64(point.X) * 0.2)),
 				}
 }
 
-func pictorial3d(piont Piont, opts map[string]int) Piont {
+func pictorial3d(point Point, opts map[string]int) Point {
 				// TODO: implement a function for pictorioal 3D
-				return isometric3d(piont, opts)
+				return isometric3d(point, opts)
 }
 
 func main() {
