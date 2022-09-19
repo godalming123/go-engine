@@ -13,10 +13,12 @@ import (
 // === STRUCTS ===
 
 type Point struct {
-  X     uint
-  Y     uint
-	Z     uint
-	has3d bool
+				X              uint
+				Y              uint
+				Z              uint
+				has3d          bool
+				hasBeenMoved   bool
+				hasBeenRotated bool
 }
 
 type Edge struct {
@@ -34,16 +36,27 @@ type Shape3d struct {
 				faces []Face
 }
 
+type CameraOptions struct {
+				xTranslate int
+				yTranslate int
+				zTranslate int
+				xAngle     float64
+				yAngle     float64
+				zAngleY    float64
+				zAngleX    float64
+				screenCenter Point
+}
+
 type Screen struct {
-  width                   uint
-  height                  uint
-  contents                string
-	originalContents        string
-	perspectiveFunction     func(Point, map[string]int) Point
-	perspectiveFunctionOpts map[string]int
-	showLogs                bool
-	showGuis                bool
-	name                    string
+				width                   uint
+				height                  uint
+				contents                string
+				originalContents        string
+				items                   []Shape3d
+				cameraOpts              CameraOptions
+				showLogs                bool
+				showGuis                bool
+				name                    string
 }
 
 // === HELPERS ===
@@ -61,7 +74,7 @@ func addWhitespace(input string, minimumChars uint) string {
 
 func copysign(a int, b int) int {
 				if b >= 0 {
-							return a	
+								return a	
 				} else {
 								return -a
 				}
@@ -76,7 +89,7 @@ func absInt(num int) int {
 }
 
 func clearScreen() {
-				cmd := exec.Command("clear") //Linux example, its tested
+				cmd := exec.Command("clear") //Linux only
         cmd.Stdout = os.Stdout
         cmd.Run()
 }
@@ -85,6 +98,14 @@ func typeToQuit(message string) {
 				fmt.Println(message)
 				var i []byte = make([]byte, 1)
 				os.Stdin.Read(i)
+}
+
+func toggleBtn(option string, toggled bool) string {
+				if toggled {
+								return option + " ON"
+				}	else {
+								return option + " OFF"
+				}
 }
 
 func drawList(header string, subtitle string, items []string, selectedIndex uint) {
@@ -109,7 +130,7 @@ func drawList(header string, subtitle string, items []string, selectedIndex uint
 func selectTui(header string, options []string, selectedIndex uint) uint {
 				var i []byte = make([]byte, 1)
 				clearScreen()
-				drawList(header,"  w - up, s -down, d - select",options,selectedIndex)
+				drawList(header, "  w - up, s -down, d - select", options, selectedIndex)
 				for true {
 								os.Stdin.Read(i)
 								input := string(i)
@@ -129,6 +150,9 @@ func selectTui(header string, options []string, selectedIndex uint) uint {
 // === FUNCTIONS FOR SCREEN STRUCT ===
 
 func (screen *Screen)bresignham3D(a Point, b Point, newChar string) {
+				a = transformAndRotate(a, screen.cameraOpts)
+				b = transformAndRotate(b, screen.cameraOpts)
+
 				dx := absInt(int(b.X - a.X))
 				dy := absInt(int(b.Y - a.Y))
 				dz := absInt(int(b.Z - a.Z))
@@ -214,13 +238,29 @@ func (screen *Screen)bresignham3D(a Point, b Point, newChar string) {
 				}
 }
 
-func newScreen(width uint, height uint, name string, perspectiveFunction func(Point, map[string]int) Point, perspectiveFunctionOpts map[string]int, showGuis bool, showLogs bool) Screen {
-				if perspectiveFunction == nil { // if the perspective function is undefiened
-								perspectiveFunction = pictorial3d // then set it to something
+func (screen *Screen)raycastToContents() {
+				// TODO make raycasting
+}
+
+func newScreen(width uint, height uint, name string, cameraOptions CameraOptions, showGuis bool, showLogs bool) Screen {
+				if (cameraOptions == CameraOptions{}) { // if no camera options are present
+								cameraOptions = CameraOptions{ // then generate them
+												xTranslate: 0,
+												yTranslate: 0,
+												zTranslate: 0,
+												xAngle: -0.3, // adds to Y depending on X * xAngle
+												yAngle: 0,    // adds to X depending on Y * yAngle
+												zAngleY: 0.7, // adds to Y depending on Z * zAngleY
+												zAngleX: 1,   // adds to X depending on Z * zAngleX
+												screenCenter: Point{
+																X: width / 2,
+																Y: height / 2,
+												},
+								}
 				}
 				contents := ""
 				for i:=uint(0);i < height;i++ {//for each row
-								contents += strings.Repeat("  ", int(width)) + " \n"
+								contents += strings.Repeat("  ", int(width)) + " \n" // add the blankspace
 				}
 				if showLogs {
 								fmt.Println("LOG: screen created with", height, "pixels in height and", width, "pixels in width.")
@@ -231,28 +271,25 @@ func newScreen(width uint, height uint, name string, perspectiveFunction func(Po
 								height: height,
 								contents: contents,
 								originalContents: contents,
-								perspectiveFunction: perspectiveFunction,
-								perspectiveFunctionOpts: perspectiveFunctionOpts,
+								cameraOpts: cameraOptions,
 								showLogs: showLogs,
 								showGuis: showGuis,
 								name: name,
 				}
 }
 
-func (s *Screen)setPix(point Point, newChar string)  {
-  if point.has3d { // if the point is 3D
-    point = s.perspectiveFunction(point, s.perspectiveFunctionOpts) // then make it 2D
-	}
-	if point.X < s.width && point.Y < s.height {
-				charToSet := (point.Y * (s.width + 1)) + point.X
-				charToSet *= 2
-				s.contents = s.contents[:charToSet] + strings.Repeat(newChar, 2) + s.contents[charToSet+2:]
-				if s.showLogs {
-								fmt.Println("LOG: pixel created at Y:", point.Y, "X:", point.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
+func (screen *Screen)setPix(point Point, newChar string)  {
+				point = transformAndRotate(point, screen.cameraOpts)
+				if point.X < screen.width && point.Y < screen.height { // if the point fits in the screen
+								charToSet := (point.Y * (screen.width + 1)) + point.X
+								charToSet *= 2
+								screen.contents = screen.contents[:charToSet] + strings.Repeat(newChar, 2) + screen.contents[charToSet+2:]
+								if screen.showLogs {
+												fmt.Println("LOG: pixel created at Y:", point.Y, "X:", point.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
+								}
+				} else if screen.showLogs{
+								fmt.Println("LOG: It doesnt appear that the pixel is within the screens bounds")
 				}
-	} else if s.showLogs{
-					fmt.Println("LOG: It doesnt appear that the pixel is within the screens bounds")
-  }
 }
 
 func (screen *Screen)drawEdge(edge Edge) {
@@ -268,8 +305,9 @@ func (screen *Screen)drawFace(face Face) {
 				for edge := 0; edge < len(face.edges); edge++ {
 								screen.drawEdge(face.edges[edge])
 				}
-				// fill it in
 
+				// fill it in
+				// TODO: add code to fill faces in
 }
 
 func (screen *Screen)draw3dShape(shape Shape3d) {
@@ -281,9 +319,7 @@ func (screen *Screen)draw3dShape(shape Shape3d) {
 				}
 }
 
-
-
-func (screen *Screen)printMe() {
+func (screen *Screen)printContents() {
 				if screen.showGuis {
 								if screen.name != "" {
 												fmt.Println(screen.name)
@@ -304,24 +340,50 @@ func (screen *Screen)reset() {
 
 // === FUNCTIONS TO HANDLE 3D (take a 3d point and convert it to a 2d point that looks 3d) ===
 
-func oblique3d(point Point, opts map[string]int) Point {
-				return Point {
-								X: point.X + point.Z,
-								Y: point.Y + point.Z,
+func move(point Point, opts CameraOptions) Point {
+				//fmt.Println("LOG: started transform X:", point.X, "Y: ", point.Y, "Z:", point.Z)
+				point = Point{
+								X: uint(int(point.X) + opts.xTranslate),
+								Y: uint(int(point.Y) + opts.yTranslate),
+								Z: uint(int(point.Z) + opts.zTranslate),
+								has3d: point.has3d,
+								hasBeenMoved: true,
+								hasBeenRotated: point.hasBeenRotated,
 				}
+				//fmt.Println("LOG: finished transform X:", point.X, "Y: ", point.Y, "Z:", point.Z)
+				return point
 }
 
-func isometric3d(point Point, opts map[string]int) Point {
+func rotate(point Point, opts CameraOptions) Point {
 				return Point {
-								X: point.X + point.Z,
-								Y: point.Y + point.Z + uint(math.Round(float64(point.X) * 0.2)),
-				}
+								X: uint(math.Round(
+												(float64(point.X)) +
+												(float64(point.Y) * float64(opts.yAngle)) +
+												(float64(point.Z) * float64(opts.zAngleX)),
+								)),
+								Y: uint(math.Round(
+												(float64(point.Y)) +
+												(float64(point.X) * float64(opts.xAngle)) +
+												(float64(point.Z) * float64(opts.zAngleY)),
+								)),
+								Z: point.Z,
+								has3d: point.has3d,
+								hasBeenRotated: true,
+								hasBeenMoved: point.hasBeenMoved,
+				}	
 }
 
-func pictorial3d(point Point, opts map[string]int) Point {
-				// TODO: implement a function for pictorioal 3D
-				return isometric3d(point, opts)
+func transformAndRotate(point Point, opts CameraOptions) Point {
+				if !point.hasBeenMoved {
+								point = move(point, opts)
+				}
+				if !point.hasBeenRotated && point.has3d {
+								point = rotate(point, opts)
+				}
+				return point
 }
+
+// === MAIN ===
 
 func main() {
 				// disable input buffering
@@ -330,12 +392,8 @@ func main() {
 				exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 
 				selection := uint(0)
-				showLogs := "OFF"
-				showGuis := "ON"
-
-				showLogsBool := false
-				showGuisBool := true
-
+				showLogs := false
+				showGuis := true
 
 				mainLoop: for true {
 								printTook := true
@@ -349,8 +407,8 @@ func main() {
 																"Show a graph demo",
 																"Show a line to test performance",
 																"Show some pixels to test code",
-																"Show logs " + showLogs,
-																"Show guis " + showGuis,
+																toggleBtn("Show logs", showLogs),
+																toggleBtn("Show guis", showGuis),
 																"Quit",
 												},
 												selection,
@@ -360,35 +418,17 @@ func main() {
 								
 								start := time.Now()
 								switch selection {
-												case 0:
-																speedTest(showGuisBool, showLogsBool)
-												case 1:
-																cube3d(showGuisBool,showLogsBool)
-												case 2:
-																spinningLine(showGuisBool,showLogsBool)
-												case 3:
-																graphDemo(showGuisBool,showLogsBool)
-												case 4:
-																lineSpeedTest(showGuisBool,showLogsBool)
-												case 5:
-																setFewPixels(showGuisBool,showLogsBool)
-												case 6:
-																if showLogs == "ON" {
-																				showLogs = "OFF"
-																				showLogsBool = false
-																} else {
-																				showLogs = "ON"
-																				showLogsBool = true
-																}
+												case 0: speedTest     (showGuis, showLogs)
+												case 1: cube3d        (showGuis, showLogs)
+												case 2: spinningLine  (showGuis, showLogs)
+												case 3: graphDemo     (showGuis, showLogs)
+												case 4: lineSpeedTest (showGuis, showLogs)
+												case 5: setFewPixels  (showGuis, showLogs)
+												case 6: 
+																showLogs = !showLogs
 																printQuit, printTook = false, false
 												case 7:
-																if showGuis == "ON" {
-																				showGuis = "OFF"
-																				showGuisBool = false
-																} else {
-																				showGuis = "ON"
-																				showGuisBool = true
-																}
+																showGuis = !showGuis
 																printQuit, printTook = false, false
 												case 8:
 																break mainLoop

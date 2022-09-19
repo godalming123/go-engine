@@ -1,17 +1,24 @@
 package main
 
 func cube3d (showGuis bool, showLogs bool) {
-				screen := newScreen(24,24,"3D CUBE",nil,nil,showGuis,showLogs)
+				screen := newScreen(30,21,"3D CUBE",CameraOptions{},showGuis,showLogs)
+
+				x1 := uint(0)
+				x2 := uint(10)
+				y1 := uint(0)
+				y2 := uint(10)
+				z1 := uint(4)
+				z2 := uint(14)
 
 				points := []Point{
-								{X: 0,  Y: 5,  Z: 0,  has3d: true},
-								{X: 0,  Y: 5,  Z: 10, has3d: true},
-								{X: 0,  Y: 15, Z: 0,  has3d: true},
-								{X: 0,  Y: 15, Z: 10, has3d: true},
-								{X: 10, Y: 5,  Z: 0,  has3d: true},
-								{X: 10, Y: 5,  Z: 10, has3d: true},
-								{X: 10, Y: 15, Z: 0,  has3d: true},
-								{X: 10, Y: 15, Z: 10, has3d: true},
+								{X: x1, Y: y1, Z: z1, has3d: true},
+								{X: x1, Y: y1, Z: z2, has3d: true},
+								{X: x1, Y: y2, Z: z1, has3d: true},
+								{X: x1, Y: y2, Z: z2, has3d: true},
+								{X: x2, Y: y1, Z: z1, has3d: true},
+								{X: x2, Y: y1, Z: z2, has3d: true},
+								{X: x2, Y: y2, Z: z1, has3d: true},
+								{X: x2, Y: y2, Z: z2, has3d: true},
 				}
 				edges := []Edge{
 								//edges for front of cube
@@ -113,5 +120,5 @@ func cube3d (showGuis bool, showLogs bool) {
 								},
 				)
 
-				screen.printMe()
+				screen.printContents()
 }

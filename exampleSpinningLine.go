@@ -6,13 +6,13 @@ import (
 )
 
 func onDone(screen Screen) {
-				screen.printMe()
+				screen.printContents()
 				fmt.Println("Press ctrl+c to exit")
 				time.Sleep(time.Millisecond * 10)
 }
 	
 func spinningLine (showGuis bool, showLogs bool) {
-				screen := newScreen(32,32,"SPINNING LINE",nil,nil,showGuis,showLogs)
+				screen := newScreen(32,32,"SPINNING LINE",CameraOptions{},showGuis,showLogs)
 			
 				for true {
 								for y := uint(0); (y < screen.height); y++ {
