@@ -37,13 +37,13 @@ type Shape3d struct {
 }
 
 type CameraOptions struct {
-				xTranslate int
-				yTranslate int
-				zTranslate int
-				xAngle     float64
-				yAngle     float64
-				zAngleY    float64
-				zAngleX    float64
+				xTranslate   int
+				yTranslate   int
+				zTranslate   int
+				xAngle       float64
+				yAngle       float64
+				zAngleY      float64
+				zAngleX      float64
 				screenCenter Point
 }
 
