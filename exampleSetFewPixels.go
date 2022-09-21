@@ -1,20 +1,20 @@
 package main
 
-func setFewPixels (showGuis bool, showLogs bool) {
-				screen := newScreen(11,11,"SET FEW PIXELS",CameraOptions{},showGuis,showLogs)
+func setFewPixels(showGuis bool, showLogs bool) {
+	screen := newScreen(11, 11, "SET FEW PIXELS", CameraOptions{}, showGuis, showLogs)
 
-				x1 := uint(0)
-				x2 := uint(10)
-				y1 := uint(0)
-				y2 := uint(5)
-				y3 := uint(10)
+	x1 := uint(0)
+	x2 := uint(10)
+	y1 := uint(0)
+	y2 := uint(5)
+	y3 := uint(10)
 
-				screen.setPix(Point{X: x1, Y: y1 }, "1")
-				screen.setPix(Point{X: x1, Y: y2 }, "2")
-				screen.setPix(Point{X: x1, Y: y3 }, "3")
-				screen.setPix(Point{X: x2, Y: y1 }, "1")
-				screen.setPix(Point{X: x2, Y: y2 }, "2")
-				screen.setPix(Point{X: x2, Y: y3 }, "3")
+	screen.setPix(Point{X: x1, Y: y1}, "1")
+	screen.setPix(Point{X: x1, Y: y2}, "2")
+	screen.setPix(Point{X: x1, Y: y3}, "3")
+	screen.setPix(Point{X: x2, Y: y1}, "1")
+	screen.setPix(Point{X: x2, Y: y2}, "2")
+	screen.setPix(Point{X: x2, Y: y3}, "3")
 
-				screen.printContents()
+	screen.printContents()
 }
