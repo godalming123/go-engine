@@ -9,12 +9,12 @@ func setFewPixels(showGuis bool, showLogs bool) {
 	y2 := uint(5)
 	y3 := uint(10)
 
-	screen.setPix(Point{X: x1, Y: y1}, "1")
-	screen.setPix(Point{X: x1, Y: y2}, "2")
-	screen.setPix(Point{X: x1, Y: y3}, "3")
-	screen.setPix(Point{X: x2, Y: y1}, "1")
-	screen.setPix(Point{X: x2, Y: y2}, "2")
-	screen.setPix(Point{X: x2, Y: y3}, "3")
+	screen.setPix(Point{X: x1, Y: y1}, pixelCharecter)
+	screen.setPix(Point{X: x1, Y: y2}, pixelCharecter)
+	screen.setPix(Point{X: x1, Y: y3}, pixelCharecter)
+	screen.setPix(Point{X: x2, Y: y1}, pixelCharecter)
+	screen.setPix(Point{X: x2, Y: y2}, pixelCharecter)
+	screen.setPix(Point{X: x2, Y: y3}, pixelCharecter)
 
 	screen.printContents()
 }

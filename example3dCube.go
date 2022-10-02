@@ -25,64 +25,64 @@ func cube3d(showGuis bool, showLogs bool) {
 		{
 			pointA:        points[0],
 			pointB:        points[4],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[4],
 			pointB:        points[6],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[6],
 			pointB:        points[2],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[2],
 			pointB:        points[0],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		// edges for back of cube
 		{
 			pointA:        points[1],
 			pointB:        points[5],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[5],
 			pointB:        points[7],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[7],
 			pointB:        points[3],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[3],
 			pointB:        points[1],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		// edges for linking
 		{
 			pointA:        points[0],
 			pointB:        points[1],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[4],
 			pointB:        points[5],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[6],
 			pointB:        points[7],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 		{
 			pointA:        points[2],
 			pointB:        points[3],
-			edgeCharecter: "#",
+			edgeCharecter: pixelCharecter,
 		},
 	}
 	faces := []Face{

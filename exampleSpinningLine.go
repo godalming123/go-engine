@@ -19,7 +19,7 @@ func spinningLine(showGuis bool, showLogs bool) {
 			screen.bresignham3D(
 				Point{X: 0, Y: y},
 				Point{X: screen.width - 1, Y: screen.height - y - 1},
-				"#",
+				pixelCharecter,
 			)
 			onDone(screen)
 			screen.reset() //reseting is not in the ondone function since it appears that that function cannot modify the screen
@@ -28,7 +28,7 @@ func spinningLine(showGuis bool, showLogs bool) {
 			screen.bresignham3D(
 				Point{X: x + 1, Y: screen.height - 1},
 				Point{X: screen.width - x - 1, Y: 0},
-				"#",
+				pixelCharecter,
 			)
 			onDone(screen)
 			screen.reset() //reseting is not in the ondone function since it appears that that function cannot modify the screen

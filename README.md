@@ -2,10 +2,6 @@
 
 The successor to https://github.com/godalming123/python-engine rewritten i go.
 
-## Bugs
-This program is not yet perfect with 1 notable bug:
- - The setpixel function does not work with unicode block charecters for some reason
-
 ## Installing
 1. **Git clone**
   `git clone https://github.com/godlaming123/go-engine`

@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+// === RUNE KEY CODES ===
+
+var pixelCharecter = []rune("█")[0]
+
 // === STRUCTS ===
 
 type Point struct {
@@ -24,7 +28,7 @@ type Point struct {
 type Edge struct {
 	pointA        Point
 	pointB        Point
-	edgeCharecter string
+	edgeCharecter rune
 }
 
 type Face struct {
@@ -34,6 +38,15 @@ type Face struct {
 
 type Shape3d struct {
 	faces []Face
+}
+
+type CircleOptns struct {
+	center    Point
+	startAt   float64
+	endAt     float64
+	radius    uint
+	charecter rune
+	thickness uint
 }
 
 type CameraOptions struct {
@@ -50,8 +63,8 @@ type CameraOptions struct {
 type Screen struct {
 	width            uint
 	height           uint
-	contents         string
-	originalContents string
+	contents         []rune // can't use a string as they dont split nicely with unicode
+	originalContents []rune
 	items            []Shape3d
 	cameraOpts       CameraOptions
 	showLogs         bool
@@ -69,6 +82,15 @@ func addWhitespace(input string, minimumChars uint) string {
 		return input + whitespaceChars
 	} else {
 		return "E"
+	}
+}
+
+var logLevel = 0
+
+func logSameLevel(showLogs bool, toLog ...any) {
+	if showLogs {
+		fmt.Printf(strings.Repeat(" | ", logLevel))
+		fmt.Println(toLog...)
 	}
 }
 
@@ -144,12 +166,13 @@ func selectTui(header string, options []string, selectedIndex uint) uint {
 		clearScreen()
 		drawList(header, "  w - up, s -down, d - select", options, selectedIndex)
 	}
+	// Just to keep the go code checking happy we must return a number even if ln. 142 does it for us
 	return 0
 }
 
 // === FUNCTIONS FOR SCREEN STRUCT ===
 
-func (screen *Screen) bresignham3D(a Point, b Point, newChar string) {
+func (screen *Screen) bresignham3D(a Point, b Point, newChar rune) {
 	a = transformAndRotate(a, screen.cameraOpts)
 	b = transformAndRotate(b, screen.cameraOpts)
 
@@ -160,17 +183,12 @@ func (screen *Screen) bresignham3D(a Point, b Point, newChar string) {
 	ys := copysign(1, int(b.Y-a.Y))
 	zs := copysign(1, int(b.Z-a.Z))
 
-	if screen.showLogs {
-		fmt.Println("LOG: STARTED: drawing bresignham line from X:", a.X, "Y:", a.Y, "Z:", a.Z, "to X:", b.X, "Y:", b.Y, "Z:", b.Z)
-		fmt.Println("LOG: deferences: X:", dx, "Y:", dy, "Z", dz)
-	}
-
-	screen.setPix(a, newChar)
+	logSameLevel(screen.showLogs, "Drawing bresignham line from X:", a.X, "Y:", a.Y, "Z:", a.Z, "to X:", b.X, "Y:", b.Y, "Z:", b.Z, "deferences X:", dx, "Y:", dy, "Z:", dz)
+	logLevel += 1
 
 	if (dx >= dy) && (dx >= dz) { // Driving axis is X-axis"
-		if screen.showLogs {
-			fmt.Println("LOG: driving axis for line is X axis")
-		}
+		logSameLevel(screen.showLogs, "Driving axis for line is X axis")
+		screen.setPix(a, newChar)
 
 		p1 := 2*dy - dx
 		p2 := 2*dz - dx
@@ -189,9 +207,8 @@ func (screen *Screen) bresignham3D(a Point, b Point, newChar string) {
 			screen.setPix(a, newChar)
 		}
 	} else if (dy >= dx) && (dy >= dz) { // Driving axis is Y axis
-		if screen.showLogs {
-			fmt.Println("LOG: driving axis for line is Y axis")
-		}
+		logSameLevel(screen.showLogs, "Driving axis for line is Y axis")
+		screen.setPix(a, newChar)
 
 		p1 := 2*dx - dy
 		p2 := 2*dz - dy
@@ -210,9 +227,8 @@ func (screen *Screen) bresignham3D(a Point, b Point, newChar string) {
 			screen.setPix(a, newChar)
 		}
 	} else if (dz >= dx) && (dz >= dy) { // Driving axis is Z-axis"
-		if screen.showLogs {
-			fmt.Println("LOG: driving axis for line is Z axis")
-		}
+		logSameLevel(screen.showLogs, "Driving axis for line is Z axis")
+		screen.setPix(a, newChar)
 
 		p1 := 2*dy - dz
 		p2 := 2*dx - dz
@@ -233,9 +249,7 @@ func (screen *Screen) bresignham3D(a Point, b Point, newChar string) {
 	} else {
 		fmt.Println("Could not find the driving axis")
 	}
-	if screen.showLogs {
-		fmt.Println("LOG: FINISHED: drawing bresignham line ===============================")
-	}
+	logLevel -= 1
 }
 
 func (screen *Screen) raycastToContents() {
@@ -262,15 +276,15 @@ func newScreen(width uint, height uint, name string, cameraOptions CameraOptions
 	for i := uint(0); i < height; i++ { //for each row
 		contents += strings.Repeat("  ", int(width)) + " \n" // add the blankspace
 	}
-	if showLogs {
-		fmt.Println("LOG: screen created with", height, "pixels in height and", width, "pixels in width.")
-	}
+	runeContents := []rune(contents)
+	logSameLevel(showLogs, "Screen created with", height, "pixels in height and", width, "pixels in width.")
+	logLevel += 1
 
 	return Screen{
 		width:            width,
 		height:           height,
-		contents:         contents,
-		originalContents: contents,
+		contents:         runeContents,
+		originalContents: runeContents,
 		cameraOpts:       cameraOptions,
 		showLogs:         showLogs,
 		showGuis:         showGuis,
@@ -278,17 +292,24 @@ func newScreen(width uint, height uint, name string, cameraOptions CameraOptions
 	}
 }
 
-func (screen *Screen) setPix(point Point, newChar string) {
+func (screen *Screen) setPix(point Point, newChar rune) {
 	point = transformAndRotate(point, screen.cameraOpts)
 	if point.X < screen.width && point.Y < screen.height { // if the point fits in the screen
 		charToSet := (point.Y * (screen.width + 1)) + point.X
 		charToSet *= 2
-		screen.contents = screen.contents[:charToSet] + strings.Repeat(newChar, 2) + screen.contents[charToSet+2:]
-		if screen.showLogs {
-			fmt.Println("LOG: pixel created at Y:", point.Y, "X:", point.X, "and the charecter will be:", newChar, "and the charecter to set is", charToSet)
-		}
-	} else if screen.showLogs {
-		fmt.Println("LOG: It doesnt appear that the pixel is within the screens bounds")
+		logSameLevel(
+			screen.showLogs,
+			"Pixel created at",
+			"Y:", addWhitespace(fmt.Sprint(point.Y), 8),
+			"X:", addWhitespace(fmt.Sprint(point.X), 8),
+			"and the charecter will be:", newChar,
+			"and the previous charecters were:", screen.contents[charToSet:charToSet+2],
+			"and the charecter to set is", charToSet,
+		)
+		screen.contents[charToSet] = newChar
+		screen.contents[charToSet+1] = newChar
+	} else {
+		logSameLevel(screen.showLogs, "It doesnt appear that the pixel is within the screens bounds")
 	}
 }
 
@@ -296,10 +317,52 @@ func (screen *Screen) drawEdge(edge Edge) {
 	screen.bresignham3D(edge.pointA, edge.pointB, edge.edgeCharecter)
 }
 
-func (screen *Screen) drawFace(face Face) {
-	if screen.showLogs {
-		fmt.Println("LOG: started to draw face")
+func drawCirclePixel(screen *Screen, origin Point, xc uint, yc uint, charecter rune) {
+	// draws 8 pixels of a circle from 1 pixel see https://lectureloops.com/wp-content/uploads/2021/01/image-5.png explaining this process
+	screen.setPix(Point{X: origin.X + xc, Y: origin.Y + yc}, charecter)
+	screen.setPix(Point{X: origin.X + xc, Y: origin.Y - yc}, charecter)
+	screen.setPix(Point{X: origin.X - xc, Y: origin.Y + yc}, charecter)
+	screen.setPix(Point{X: origin.X - xc, Y: origin.Y - yc}, charecter)
+	screen.setPix(Point{X: origin.X + yc, Y: origin.Y + xc}, charecter)
+	screen.setPix(Point{X: origin.X + yc, Y: origin.Y - xc}, charecter)
+	screen.setPix(Point{X: origin.X - yc, Y: origin.Y + xc}, charecter)
+	screen.setPix(Point{X: origin.X - yc, Y: origin.Y - xc}, charecter)
+}
+
+func (screen *Screen) drawCircle(circle CircleOptns) {
+	logSameLevel(screen.showLogs, "Drawing circle with optns", circle)
+	logLevel += 1
+
+	x := uint(0)
+	y := circle.radius
+	d := 3 - 2*int(circle.radius)
+	drawCirclePixel(screen, circle.center, x, y, circle.charecter)
+	for y >= x {
+		// for each pixel we will
+		// draw all eight pixels
+
+		x++
+
+		// check for decision parameter
+		// and correspondingly
+		// update d, x, y
+		if d > 0 {
+			y--
+			d = d + 4*(int(x)-int(y)) + 10
+		} else {
+			d = d + 4*int(x) + 6
+		}
+		for i := uint(0); i < circle.thickness; i++ {
+			drawCirclePixel(screen, circle.center, x, y-i, circle.charecter)
+		}
 	}
+
+	logLevel -= 1
+}
+
+func (screen *Screen) drawFace(face Face) {
+	logSameLevel(screen.showLogs, "Drawing face")
+	logLevel += 1
 
 	// draw the borders
 	for edge := 0; edge < len(face.edges); edge++ {
@@ -308,12 +371,14 @@ func (screen *Screen) drawFace(face Face) {
 
 	// fill it in
 	// TODO: add code to fill faces in
+
+	logLevel -= 1
 }
 
 func (screen *Screen) draw3dShape(shape Shape3d) {
-	if screen.showLogs {
-		fmt.Println("LOG: started to draw shape")
-	}
+	logSameLevel(screen.showLogs, "Drawing shape")
+	logLevel += 1
+
 	for face := 0; face < len(shape.faces); face++ {
 		screen.drawFace(shape.faces[face])
 	}
@@ -324,18 +389,14 @@ func (screen *Screen) printContents() {
 		if screen.name != "" {
 			fmt.Println(screen.name)
 		}
-		fmt.Print(screen.contents)
+		fmt.Print(string(screen.contents))
 	}
-	if screen.showLogs {
-		fmt.Println("LOG: screen printed")
-	}
+	logSameLevel(screen.showLogs, "Screen printed")
 }
 
 func (screen *Screen) reset() {
 	screen.contents = screen.originalContents
-	if screen.showLogs {
-		fmt.Println("LOG: screen reset")
-	}
+	logSameLevel(screen.showLogs, "Screen reset")
 }
 
 // === FUNCTIONS TO HANDLE 3D (take a 3d point and convert it to a 2d point that looks 3d) ===
@@ -397,6 +458,7 @@ func main() {
 
 mainLoop:
 	for true {
+		logLevel = 0 // reset log level
 		printTook := true
 		printQuit := true
 		selection = selectTui(
@@ -405,6 +467,7 @@ mainLoop:
 				"Run a speed test",
 				"Show a 3d cube example",
 				"Show a spining line",
+				"Show a circle demo",
 				"Show a graph demo",
 				"Show a line to test performance",
 				"Show some pixels to test code",
@@ -426,18 +489,20 @@ mainLoop:
 		case 2:
 			spinningLine(showGuis, showLogs)
 		case 3:
-			graphDemo(showGuis, showLogs)
+			circleDemo(showGuis, showLogs)
 		case 4:
-			lineSpeedTest(showGuis, showLogs)
+			graphDemo(showGuis, showLogs)
 		case 5:
-			setFewPixels(showGuis, showLogs)
+			lineSpeedTest(showGuis, showLogs)
 		case 6:
+			setFewPixels(showGuis, showLogs)
+		case 7:
 			showLogs = !showLogs
 			printQuit, printTook = false, false
-		case 7:
+		case 8:
 			showGuis = !showGuis
 			printQuit, printTook = false, false
-		case 8:
+		case 9:
 			break mainLoop
 		}
 		if printTook {
