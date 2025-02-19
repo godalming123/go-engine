@@ -1,6 +1,6 @@
 # go-engine
 
-The successor to https://github.com/godalming123/python-engine rewritten i go.
+The successor to https://github.com/godalming123/python-engine rewritten in go.
 
 ## Installing
 1. **Git clone**
