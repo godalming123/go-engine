@@ -272,10 +272,8 @@ func newScreen(width uint, height uint, name string, cameraOptions CameraOptions
 			},
 		}
 	}
-	contents := ""
-	for i := uint(0); i < height; i++ { //for each row
-		contents += strings.Repeat("  ", int(width)) + " \n" // add the blankspace
-	}
+	lineContents := strings.Repeat("  ", int(width)) + " \n"
+	contents := strings.Repeat(lineContents, int(height))
 	runeContents := []rune(contents)
 	logSameLevel(showLogs, "Screen created with", height, "pixels in height and", width, "pixels in width.")
 	logLevel += 1
